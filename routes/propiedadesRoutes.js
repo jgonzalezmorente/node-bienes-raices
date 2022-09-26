@@ -1,12 +1,17 @@
 import express from 'express';
-import { body, check } from 'express-validator';
-import { admin, crear, guardar } from '../controllers/propiedadController.js';
+import { body } from 'express-validator';
+import { admin, crear, guardar, agregarImagen } from '../controllers/propiedadController.js';
+import protegerRuta from '../middlewares/protegerRuta.js';
 
 const router = express.Router();
 
-router.get( '/mis-propiedades', admin );
-router.get( '/propiedades/crear', crear );
-router.post( '/propiedades/crear', 
+router.get( '/mis-propiedades', protegerRuta, admin );
+
+router.get( '/propiedades/crear', protegerRuta, crear );
+
+router.post( '/propiedades/crear',
+    protegerRuta,
+    
     body( 'titulo' ).notEmpty().withMessage( 'El título del anuncio es obligatorio' ),
     
     body( 'descripcion' )
@@ -27,6 +32,8 @@ router.post( '/propiedades/crear',
 
     guardar 
 );
+
+router.get( '/propiedades/agregar-imagen/:id', agregarImagen );
 
 
 export default router;
