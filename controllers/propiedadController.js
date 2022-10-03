@@ -7,7 +7,6 @@ const admin = ( req, res ) => {
     });
 }
 
-
 // Formulario para crear una nueva propiedad
 const crear = async ( req, res ) => {
 
@@ -81,7 +80,7 @@ const guardar = async ( req, res ) => {
 }
 
 const agregarImagen = async ( req, res ) => {
-
+    
     const { id } = req.params;
 
     // Validar que la propiedad exista
@@ -105,13 +104,13 @@ const agregarImagen = async ( req, res ) => {
         pagina: `Agregar Imagen: ${ propiedad.titulo }`,
         csrfToken: req.csrfToken(),
         propiedad,
-        
     });
 
 }
 
 
-const almacenarImagen = async ( req, res, next ) => {
+const almacenarImagen = async ( req, res, next ) => {    
+
     const { id } = req.params;
 
     // Validar que la propiedad exista
@@ -132,12 +131,10 @@ const almacenarImagen = async ( req, res, next ) => {
     };
 
     try {
-
         // Almacenar la imagen y publicar la propiedad    
         propiedad.imagen = req.file.filename;
         propiedad.publicado = 1;
         await propiedad.save();
-
         next();
 
     } catch (error) {
