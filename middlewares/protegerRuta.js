@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 import { Usuario } from '../models/index.js';
 
 
-const protegerRuta = async ( req, res, next ) => {
+const protegerRuta = async ( req, res, next ) => {    
 
     // Verificar si hay un token
     const { _token } = req.cookies;
