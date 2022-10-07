@@ -28,10 +28,7 @@ const protegerRuta = async ( req, res, next ) => {
     } catch (error) {
         console.log(error);
         return res.clearCookie( '_token' ).redirect('/auth/login');
-    }
-
-
-    next();
+    }    
 }
 
 
