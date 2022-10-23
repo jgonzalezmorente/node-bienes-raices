@@ -1,26 +1,61 @@
-import { unlink } from 'node:fs/promises';
 import { validationResult } from 'express-validator';
 import { Precio, Categoria, Propiedad } from '../models/index.js';
 
 const admin = async ( req, res ) => {
 
-    const { id: usuarioId } = req.usuario;
+    // Leer QueryString
 
-    const propiedades = await Propiedad.findAll({ 
-        where: {
-            usuarioId
-        },
-        include: [
-            { model: Categoria, as: 'categoria' },
-            { model: Precio, as: 'precio' }
-        ]
-    });
+    const { pagina: paginaActual } = req.query;
 
-    res.render( 'propiedades/admin', {
-        pagina: 'Mis propiedades',
-        propiedades,
-        csrfToken: req.csrfToken(),
-    });
+    const expresion = /^[1-9]+$/;
+
+    if ( !expresion.test( paginaActual ) ) {
+        return res.redirect( 'mis-propiedades?pagina=1' );
+    }
+    
+    try {
+        
+        const { id: usuarioId } = req.usuario;
+
+        // Límites y Offset para el paginador
+        const limit = 10;
+        const offset = limit * ( paginaActual - 1 );
+    
+        const [ propiedades, total ] = await Promise.all([
+           
+            Propiedad.findAll({
+                limit,
+                offset,
+                where: {
+                    usuarioId
+                },
+                include: [
+                    { model: Categoria, as: 'categoria' },
+                    { model: Precio, as: 'precio' }
+                ]
+            }),
+
+            Propiedad.count({
+                where: {
+                    usuarioId
+                }
+            })
+        ]);
+    
+        res.render( 'propiedades/admin', {
+            pagina: 'Mis propiedades',
+            propiedades,
+            csrfToken: req.csrfToken(),
+            paginas: Math.ceil( total / limit ),
+            paginaActual: Number( paginaActual ),
+            total,
+            offset,
+            limit
+        });
+    } catch (error) {
+        console.log(error);
+        
+    }
 }
 
 // Formulario para crear una nueva propiedad
