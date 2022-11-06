@@ -2,8 +2,11 @@ import express from 'express';
 import csrf from 'csurf';
 import usuarioRoutes from './routes/usuarioRoutes.js';
 import propiedadRoutes from './routes/propiedadesRoutes.js';
+import appRoutes from './routes/appRoutes.js';
+import apiRoutes from './routes/apiRoutes.js';
 import db from './config/db.js';
 import cookieParser from 'cookie-parser';
+
 
 // Crear la app
 const app = express();
@@ -35,8 +38,10 @@ app.set( 'views', './views');
 app.use( express.static( 'public') );
 
 // Routing
+app.use( '/', appRoutes );
 app.use( '/auth', usuarioRoutes );
 app.use( '/', propiedadRoutes );
+app.use( '/api', apiRoutes );
 
 // Definir un puerto y arrancar el proyecto
 const port = process.env.PORT || 3000;
