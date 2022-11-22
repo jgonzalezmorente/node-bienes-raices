@@ -328,13 +328,14 @@ const mostrarPropiedad = async ( req, res ) => {
     });
 
     if ( !propiedad ) {
-        return res.render( '/404' );
+        return res.redirect( '/404' );
     }
 
 
     res.render( 'propiedades/mostrar', {
         propiedad,
-        pagina: propiedad.titulo
+        pagina: propiedad.titulo,
+        csrfToken: req.csrfToken(),
     });
 
 }
