@@ -1,5 +1,7 @@
 import { validationResult } from 'express-validator';
-import { Precio, Categoria, Propiedad } from '../models/index.js';
+import { Precio, Categoria, Propiedad, Mensaje, Usuario } from '../models/index.js';
+import { esVendedor, formatearFecha } from '../helpers/index.js';
+
 
 const admin = async ( req, res ) => {
 
@@ -31,7 +33,8 @@ const admin = async ( req, res ) => {
                 },
                 include: [
                     { model: Categoria, as: 'categoria' },
-                    { model: Precio, as: 'precio' }
+                    { model: Precio, as: 'precio' },
+                    { model: Mensaje, as: 'mensajes' },
                 ]
             }),
 
@@ -89,7 +92,7 @@ const guardar = async ( req, res ) => {
         ]);
     
         return res.render( 'propiedades/crear', {
-            pagina: 'Crear propiedad',            
+            pagina: 'Crear propiedad',
             csrfToken: req.csrfToken(),
             categorias,
             precios,
@@ -325,7 +328,7 @@ const mostrarPropiedad = async ( req, res ) => {
             { model: Precio, as: 'precio' },
             { model: Categoria, as: 'categoria' },
         ]
-    });
+    });    
 
     if ( !propiedad ) {
         return res.redirect( '/404' );
@@ -336,10 +339,102 @@ const mostrarPropiedad = async ( req, res ) => {
         propiedad,
         pagina: propiedad.titulo,
         csrfToken: req.csrfToken(),
+        usuario: req.usuario,
+        esVendedor: esVendedor( req.usuario?.id, propiedad.usuarioId )
     });
 
 }
 
+
+const enviarMensaje = async ( req, res ) => {
+    const { id } = req.params;
+
+    // Comprobar que la propiedad exista
+    const propiedad = await Propiedad.findByPk( id, {
+        include: [
+            { model: Precio, as: 'precio' },
+            { model: Categoria, as: 'categoria' },
+        ]
+    });    
+
+    if ( !propiedad ) {
+        return res.redirect( '/404' );
+    }
+
+    // Renderizar errores    
+    let resultado = validationResult( req );
+    if ( !resultado.isEmpty() ) {
+        console.log( resultado.array() )
+        return res.render( 'propiedades/mostrar', {
+            propiedad,
+            pagina: propiedad.titulo,
+            csrfToken: req.csrfToken(),
+            usuario: req.usuario,
+            esVendedor: esVendedor( req.usuario?.id, propiedad.usuarioId ),
+            errores: resultado.array()
+        });
+    }
+
+    // Almacenar el mensaje
+    const { mensaje } = req.body;
+    const { id: propiedadId } = req.params;
+    const { id: usuarioId } = req.usuario;
+    
+    await Mensaje.create({
+        mensaje,
+        propiedadId,
+        usuarioId,
+    });
+
+    res.render( 'propiedades/mostrar', {
+        propiedad,
+        pagina: propiedad.titulo,
+        csrfToken: req.csrfToken(),
+        usuario: req.usuario,
+        esVendedor: esVendedor( req.usuario?.id, propiedad.usuarioId ),
+        enviado: true
+    });
+
+}
+
+// leer mensajes recibidos
+
+const verMensajes = async ( req, res ) => {
+
+    const { id } = req.params;
+
+    // Validar que la propiedad exista
+    const propiedad = await Propiedad.findByPk( id, {
+        include: [
+            {
+                model: Mensaje,
+                as: 'mensajes', 
+                include: [
+                    {
+                        model: Usuario.scope('eliminarPassword'),
+                        as: 'usuario'
+                    }
+                ]
+            },
+        ]
+    });
+
+    if ( !propiedad ) {
+        return res.redirect( '/mis-propiedades' );
+    }
+
+    // Revisar que quien visita la URL, es quien creó la propidad
+    if ( propiedad.usuarioId.toString() !== req.usuario.id.toString() ) {
+        return res.redirect( '/mis-propiedades' );
+    }
+
+
+    res.render( 'propiedades/mensajes', {
+        pagina: 'Mensajes',
+        mensajes: propiedad.mensajes,
+        formatearFecha
+    });
+}
 
 export {
     admin,
@@ -350,5 +445,7 @@ export {
     editar,
     guardarCambios,
     eliminar,
-    mostrarPropiedad
+    mostrarPropiedad,
+    enviarMensaje,
+    verMensajes,
 }

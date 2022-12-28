@@ -10,11 +10,14 @@ import {
     editar, 
     guardarCambios, 
     eliminar,
-    mostrarPropiedad
+    mostrarPropiedad,
+    enviarMensaje,
+    verMensajes,
 } from '../controllers/propiedadController.js';
 
 import protegerRuta from '../middlewares/protegerRuta.js';
 import upload from '../middlewares/subirImagen.js';
+import identificarUsuario from '../middlewares/identificarUsuario.js';
 
 
 const router = express.Router();
@@ -27,7 +30,7 @@ router.post( '/propiedades/crear',
     protegerRuta,
     
     body( 'titulo' ).notEmpty().withMessage( 'El título del anuncio es obligatorio' ),
-    
+
     body( 'descripcion' )
         .notEmpty().withMessage( 'La descripción no puede ir vacía' )
         .isLength({ max: 200 }).withMessage( 'La descripción es muy larga' ),
@@ -94,7 +97,20 @@ router.post( '/propiedades/eliminar/:id',
 
 // Área pública
 router.get( '/propiedad/:id',
+    identificarUsuario,
     mostrarPropiedad
+);
+
+// Almacenar los mensajes
+router.post( '/propiedad/:id',
+    identificarUsuario,
+    body( 'mensaje' ).isLength( { min: 10 } ).withMessage( 'El Mensaje no puede ir vacío o es muy corto' ),
+    enviarMensaje
+);
+
+router.get( '/mensajes/:id', 
+    protegerRuta,
+    verMensajes
 );
 
 export default router;
